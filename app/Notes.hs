@@ -33,7 +33,7 @@ import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as Vty
-import Lens.Micro ((^.), (&))
+import Lens.Micro ((^.), (&), (.~))
 import Lens.Micro.TH (makeLenses)
 
 import DatabaseController (readNotes)
@@ -44,7 +44,9 @@ data Name = VPNotes | VPNote
 
 
 -- application state
-data St = St { _stNotes :: L.List Name String }
+data St = St { _stNotes :: L.List Name String
+             , _stSelected :: Maybe String
+             }
 makeLenses ''St -- to be able to extract list state from state for handleListEvent
 
 
@@ -68,8 +70,14 @@ drawUI st = [ui] where
     notes = B.borderWithLabel (str " Notes ") $
         L.renderList listElemRenderer True _list
     noteContent = padAll 1 $
-            noteContainer "Tresc no\nelaosdfkasdfak sjhdfkajsdhf laksjdhflkasjdhf laksjdhf aksljdhf alksjdfhaklsdjhfalksdjhfalskdj halsdkjfha lskdjfhalksdjhf alskjdfhalsk jhfalksdjhf alskdjhf alskdjfh alskdjfftatki"
-    _list = (st & _stNotes)
+            noteContainer $ case selected of 
+                Nothing -> "--- [ note content ] ---"
+                Just note -> noteContents note
+    _list = st & _stNotes
+    selected = st & _stSelected
+
+noteContents :: String -> String
+noteContents selected = selected
 
 noteContainer :: String -> Widget Name
 noteContainer content = 
@@ -83,14 +91,21 @@ noteContainer content =
             str $ content ++ (take maxW $ repeat ' ')
 
 listElemRenderer :: Bool -> String -> Widget Name
-listElemRenderer selected elem = str $ show elem
+listElemRenderer selected elem = str $ elem
 
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
-appEvent st (T.VtyEvent e) = let _list = st & _stNotes in
-    case e of
-        Vty.EvKey Vty.KEnter [] -> M.continue st
-        Vty.EvKey Vty.KEsc [] -> M.halt st
-        ev -> M.continue =<< T.handleEventLensed st stNotes L.handleListEvent ev
+appEvent st (T.VtyEvent e) = 
+    let _list = st & _stNotes 
+    in case e of
+          Vty.EvKey Vty.KEnter [] -> 
+              let elem = L.listSelectedElement _list
+              in case elem of
+                Nothing -> M.continue st
+                Just (i, note) -> M.continue $ st & stSelected .~ Just note
+
+          Vty.EvKey Vty.KEsc [] -> M.halt st
+
+          ev -> M.continue =<< T.handleEventLensed st stNotes L.handleListEvent ev
 
 attrMap :: AM.AttrMap
 attrMap = AM.attrMap Vty.defAttr
@@ -102,4 +117,5 @@ attrMap = AM.attrMap Vty.defAttr
 initialState :: [String] -> St
 initialState _list =
     St { _stNotes = L.list VPNotes (Vec.fromList _list) 1
+       , _stSelected = Nothing
        }
