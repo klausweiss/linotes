@@ -32,11 +32,17 @@ import Brick.Widgets.Core
 import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
+import Data.List.Split
 import qualified Graphics.Vty as Vty
 import Lens.Micro ((^.), (&), (.~))
 import Lens.Micro.TH (makeLenses)
 
 import DatabaseController (readNotes)
+import Models.Note
+    ( noteContent
+    , noteLastModified
+    , Note
+    )
 
 -- to make Note content Viewport scrollable
 data Name = VPNotes | VPNote
@@ -44,8 +50,8 @@ data Name = VPNotes | VPNote
 
 
 -- application state
-data St = St { _stNotes :: L.List Name String
-             , _stSelected :: Maybe String
+data St = St { _stNotes :: L.List Name Note
+             , _stSelected :: Maybe Note
              }
 makeLenses ''St -- to be able to extract list state from state for handleListEvent
 
@@ -66,18 +72,15 @@ app = M.App { M.appDraw = drawUI
 drawUI :: St -> [Widget Name]
 drawUI st = [ui] where
     ui = vBox [ notes
-              , noteContent]
+              , noteContentView ]
     notes = B.borderWithLabel (str " Notes ") $
         L.renderList listElemRenderer True _list
-    noteContent = padAll 1 $
+    noteContentView = B.border $
             noteContainer $ case selected of 
                 Nothing -> "--- [ note content ] ---"
-                Just note -> noteContents note
+                Just note -> noteContent note
     _list = st & _stNotes
     selected = st & _stSelected
-
-noteContents :: String -> String
-noteContents selected = selected
 
 noteContainer :: String -> Widget Name
 noteContainer content = 
@@ -88,10 +91,17 @@ noteContainer content =
         render $ 
             hLimit maxW $
             viewport VPNote Vertical $
-            str $ content ++ (take maxW $ repeat ' ')
+            str $ fitInWidth content maxW -- ++ (take maxW $ repeat ' ')
 
-listElemRenderer :: Bool -> String -> Widget Name
-listElemRenderer selected elem = str $ elem
+fitInWidth :: String -> Int -> String
+fitInWidth text w = foldl1 (\
+        acc x -> acc ++ "\n" ++ x
+    ) $ chunksOf w $ text ++ " "
+
+listElemRenderer :: Bool -> Note -> Widget Name
+listElemRenderer selected elem = str . (\
+        note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (noteContent note)
+    ) $ elem
 
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
 appEvent st (T.VtyEvent e) = 
@@ -114,7 +124,7 @@ attrMap = AM.attrMap Vty.defAttr
     , ("noteContent",      Vty.yellow `on` Vty.black)
     ]
 
-initialState :: [String] -> St
+initialState :: [Note] -> St
 initialState _list =
     St { _stNotes = L.list VPNotes (Vec.fromList _list) 1
        , _stSelected = Nothing

@@ -31,8 +31,8 @@ saveNote note = runSqlite db_file $ do
     noteId <- insert $ Note note time
     return note
 
-readNotes :: IO [String]
+readNotes :: IO [Note]
 readNotes = runSqlite db_file $ do
     runMigration migrateAll
-    notes <- selectList [] []
-    return $ map (noteContent . entityVal) notes
+    notes <- selectList [] [Desc NoteLastModified]
+    return $ map entityVal notes
