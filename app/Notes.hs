@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import Control.Monad (void)
@@ -32,19 +33,27 @@ import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as Vty
-import Lens.Micro ((^.))
+import Lens.Micro ((^.), (&))
+import Lens.Micro.TH (makeLenses)
 
 import DatabaseController (readNotes)
 
+-- to make Note content Viewport scrollable
 data Name = VPNotes | VPNote
     deriving (Eq, Ord, Show)
+
+
+-- application state
+data St = St { _stNotes :: L.List Name String }
+makeLenses ''St -- to be able to extract list state from state for handleListEvent
+
 
 main :: IO ()
 main = do
     notes <- readNotes
     void $ M.defaultMain app (initialState notes)
 
-app :: M.App (L.List Name String) e Name
+app :: M.App St e Name
 app = M.App { M.appDraw = drawUI
             , M.appStartEvent = return
             , M.appChooseCursor = M.showFirstCursor
@@ -52,14 +61,15 @@ app = M.App { M.appDraw = drawUI
             , M.appAttrMap = const attrMap
             }
 
-drawUI :: (Show a) => L.List Name a -> [Widget Name]
-drawUI _list = [ui] where
+drawUI :: St -> [Widget Name]
+drawUI st = [ui] where
     ui = vBox [ notes
               , noteContent]
     notes = B.borderWithLabel (str " Notes ") $
         L.renderList listElemRenderer True _list
     noteContent = padAll 1 $
             noteContainer "Tresc no\nelaosdfkasdfak sjhdfkajsdhf laksjdhflkasjdhf laksjdhf aksljdhf alksjdfhaklsdjhfalksdjhfalskdj halsdkjfha lskdjfhalksdjhf alskjdfhalsk jhfalksdjhf alskdjhf alskdjfh alskdjfftatki"
+    _list = (st & _stNotes)
 
 noteContainer :: String -> Widget Name
 noteContainer content = 
@@ -72,15 +82,15 @@ noteContainer content =
             viewport VPNote Vertical $
             str $ content ++ (take maxW $ repeat ' ')
 
-listElemRenderer :: (Show a) => Bool -> a -> Widget Name
+listElemRenderer :: Bool -> String -> Widget Name
 listElemRenderer selected elem = str $ show elem
 
-appEvent :: L.List Name String -> T.BrickEvent Name e -> T.EventM Name (T.Next (L.List Name String))
-appEvent _list (T.VtyEvent e) =
+appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
+appEvent st (T.VtyEvent e) = let _list = st & _stNotes in
     case e of
-        Vty.EvKey Vty.KEnter [] -> M.halt _list
-        Vty.EvKey Vty.KEsc [] -> M.halt _list
-        ev -> M.continue =<< L.handleListEvent ev _list
+        Vty.EvKey Vty.KEnter [] -> M.continue st
+        Vty.EvKey Vty.KEsc [] -> M.halt st
+        ev -> M.continue =<< T.handleEventLensed st stNotes L.handleListEvent ev
 
 attrMap :: AM.AttrMap
 attrMap = AM.attrMap Vty.defAttr
@@ -89,5 +99,7 @@ attrMap = AM.attrMap Vty.defAttr
     , ("noteContent",      Vty.yellow `on` Vty.black)
     ]
 
-initialState :: [String] -> L.List Name String
-initialState _list = L.list VPNotes (Vec.fromList _list) 1
+initialState :: [String] -> St
+initialState _list =
+    St { _stNotes = L.list VPNotes (Vec.fromList _list) 1
+       }
