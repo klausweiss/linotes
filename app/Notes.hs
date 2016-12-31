@@ -13,6 +13,7 @@ import Brick.Types
     , getContext
     , availWidthL
     , render
+    , ViewportType(..)
     )
 import Brick.Util (on)
 import qualified Brick.Widgets.Border as B
@@ -22,6 +23,9 @@ import Brick.Widgets.Core
     , hLimit
     , vLimit
     , str
+    , txt
+    , viewport
+    , withAttr
     , padAll
     )
 import qualified Brick.Types as T
@@ -32,12 +36,15 @@ import Lens.Micro ((^.))
 
 import DatabaseController (readNotes)
 
+data Name = VPNotes | VPNote
+    deriving (Eq, Ord, Show)
+
 main :: IO ()
 main = do
     notes <- readNotes
     void $ M.defaultMain app (initialState notes)
 
-app :: M.App (L.List () String) e ()
+app :: M.App (L.List Name String) e Name
 app = M.App { M.appDraw = drawUI
             , M.appStartEvent = return
             , M.appChooseCursor = M.showFirstCursor
@@ -45,38 +52,42 @@ app = M.App { M.appDraw = drawUI
             , M.appAttrMap = const attrMap
             }
 
-drawUI :: (Show a) => L.List () a -> [Widget ()]
+drawUI :: (Show a) => L.List Name a -> [Widget Name]
 drawUI _list = [ui] where
     ui = vBox [ notes
               , noteContent]
-    notes = B.borderWithLabel (str "Notes") $
+    notes = B.borderWithLabel (str " Notes ") $
         L.renderList listElemRenderer True _list
-    noteContent = B.borderWithLabel (str "Content") $
-            noteContainer "Tresc notatki"
+    noteContent = padAll 1 $
+            noteContainer "Tresc no\nelaosdfkasdfak sjhdfkajsdhf laksjdhflkasjdhf laksjdhf aksljdhf alksjdfhaklsdjhfalksdjhfalskdj halsdkjfha lskdjfhalksdjhf alskjdfhalsk jhfalksdjhf alskdjhf alskdjfh alskdjfftatki"
 
-noteContainer :: String -> Widget n
+noteContainer :: String -> Widget Name
 noteContainer content = 
+    withAttr "noteContent" $
     T.Widget Greedy Greedy $ do
         ctx <- getContext
         maxW <- return $ ctx ^. availWidthL
         render $ 
             hLimit maxW $
+            viewport VPNote Vertical $
             str $ content ++ (take maxW $ repeat ' ')
 
-listElemRenderer :: (Show a) => Bool -> a -> Widget ()
+listElemRenderer :: (Show a) => Bool -> a -> Widget Name
 listElemRenderer selected elem = str $ show elem
 
-appEvent :: L.List () String -> T.BrickEvent () e -> T.EventM () (T.Next (L.List () String))
+appEvent :: L.List Name String -> T.BrickEvent Name e -> T.EventM Name (T.Next (L.List Name String))
 appEvent _list (T.VtyEvent e) =
     case e of
+        Vty.EvKey Vty.KEnter [] -> M.halt _list
         Vty.EvKey Vty.KEsc [] -> M.halt _list
         ev -> M.continue =<< L.handleListEvent ev _list
 
 attrMap :: AM.AttrMap
 attrMap = AM.attrMap Vty.defAttr
-    [ (L.listAttr,         Vty.white `on` Vty.blue)
+    [ (L.listAttr,         Vty.white `on` Vty.black)
     , (L.listSelectedAttr, Vty.red `on` Vty.white)
+    , ("noteContent",      Vty.yellow `on` Vty.black)
     ]
 
-initialState :: [String] -> L.List () String
-initialState _list = L.list () (Vec.fromList _list) 1
+initialState :: [String] -> L.List Name String
+initialState _list = L.list VPNotes (Vec.fromList _list) 1
