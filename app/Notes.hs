@@ -3,41 +3,26 @@
 module Main where
 
 import Control.Monad (void)
-import Control.Monad.IO.Class (liftIO)
-import Data.Monoid ((<>))
 
 import qualified Brick.AttrMap as AM
 import qualified Brick.Main as M
-import Brick.Types
-    ( Widget
-    , Size(..)
-    , getContext
-    , availWidthL
-    , render
-    , ViewportType(..)
-    )
 import Brick.Util (on)
 import qualified Brick.Widgets.Border as B
 import Brick.Widgets.Core
-    ( (<+>)
-    , vBox
-    , hLimit
-    , vLimit
+    ( vBox
     , str
-    , txt
-    , viewport
     , withAttr
-    , padAll
     )
 import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
 import Data.List.Split
 import qualified Graphics.Vty as Vty
-import Lens.Micro ((^.), (&), (.~))
+import Lens.Micro ((&), (.~))
 import Lens.Micro.TH (makeLenses)
 
 import DatabaseController (readNotes)
+import Widgets
 import Models.Note
     ( noteContent
     , noteLastModified
@@ -69,36 +54,21 @@ app = M.App { M.appDraw = drawUI
             , M.appAttrMap = const attrMap
             }
 
-drawUI :: St -> [Widget Name]
+drawUI :: St -> [T.Widget Name]
 drawUI st = [ui] where
     ui = vBox [ notes
               , noteContentView ]
     notes = B.borderWithLabel (str " Notes ") $
         L.renderList listElemRenderer True _list
     noteContentView = B.border $
-            noteContainer $ case selected of 
+            withAttr "noteContent" $
+            noteContainer VPNote $ case selected of 
                 Nothing -> "--- [ note content ] ---"
                 Just note -> noteContent note
     _list = st & _stNotes
     selected = st & _stSelected
 
-noteContainer :: String -> Widget Name
-noteContainer content = 
-    withAttr "noteContent" $
-    T.Widget Greedy Greedy $ do
-        ctx <- getContext
-        maxW <- return $ ctx ^. availWidthL
-        render $ 
-            hLimit maxW $
-            viewport VPNote Vertical $
-            str $ fitInWidth content maxW -- ++ (take maxW $ repeat ' ')
-
-fitInWidth :: String -> Int -> String
-fitInWidth text w = foldl1 (\
-        acc x -> acc ++ "\n" ++ x
-    ) $ chunksOf w $ text ++ " "
-
-listElemRenderer :: Bool -> Note -> Widget Name
+listElemRenderer :: Bool -> Note -> T.Widget Name
 listElemRenderer selected elem = str . (\
         note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (noteContent note)
     ) $ elem
@@ -119,9 +89,9 @@ appEvent st (T.VtyEvent e) =
 
 attrMap :: AM.AttrMap
 attrMap = AM.attrMap Vty.defAttr
-    [ (L.listAttr,         Vty.white `on` Vty.black)
-    , (L.listSelectedAttr, Vty.red `on` Vty.white)
-    , ("noteContent",      Vty.yellow `on` Vty.black)
+    [ (L.listAttr,          Vty.white `on` Vty.black)
+    , (L.listSelectedAttr,  Vty.red `on` Vty.white)
+    , ("noteContent",       Vty.yellow `on` Vty.black)
     ]
 
 initialState :: [Note] -> St
