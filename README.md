@@ -26,6 +26,7 @@ To view notes run
 
 `notes` keybindings explained:
 - `↑`, `↓`, `PgUp`, `PgDn`, `End`, `Home` - navigation
+- `Ctrl` + `↑`, `Ctrl` + `↓` - note content scrolling
 - `Enter` - open selected note
 - `d` / `Del` - delete selected note
 - `q` / `Esc` - quit application

@@ -90,6 +90,9 @@ appEvent st (T.VtyEvent e) =
           Vty.EvKey Vty.KDel [] -> deleteNoteEv st _list
           Vty.EvKey (Vty.KChar 'd') [] -> deleteNoteEv st _list
 
+          Vty.EvKey Vty.KDown [Vty.MCtrl] -> M.vScrollBy vpNoteScroll 1 >> M.continue st
+          Vty.EvKey Vty.KUp [Vty.MCtrl] -> M.vScrollBy vpNoteScroll (-1) >> M.continue st
+
           Vty.EvKey Vty.KEsc [] -> M.halt st
           Vty.EvKey (Vty.KChar 'q') [] -> M.halt st
 
@@ -108,8 +111,12 @@ initialState _list =
        , _stSelected = Nothing
        }
 
+-- Objects
 
--- EVENTS
+vpNoteScroll :: M.ViewportScroll Name
+vpNoteScroll = M.viewportScroll VPNote
+
+-- Events
 
 openNoteEv :: St -> L.List Name (Entity Note) -> T.EventM Name (T.Next St)
 openNoteEv st _list =
