@@ -38,9 +38,11 @@ dbFile = do
 saveNote :: String -> String -> IO String
 saveNote db_file note = runSqlite (pack db_file) $ do
     runMigration migrateAll
-    time <- liftIO getCurrentTime
-    noteId <- insert $ Note note time
-    return note
+    if length note > 0 then do
+        time <- liftIO getCurrentTime
+        noteId <- insert $ Note note time
+        return note
+    else return ""
 
 readNotes :: String -> IO [Note]
 readNotes db_file = runSqlite (pack db_file) $ do

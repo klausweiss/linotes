@@ -3,6 +3,7 @@
 module Main where
 
 import Control.Monad (void)
+import Data.List (lines)
 
 import qualified Brick.AttrMap as AM
 import qualified Brick.Main as M
@@ -16,7 +17,6 @@ import Brick.Widgets.Core
 import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
-import Data.List.Split
 import qualified Graphics.Vty as Vty
 import Lens.Micro ((&), (.~))
 import Lens.Micro.TH (makeLenses)
@@ -71,7 +71,7 @@ drawUI st = [ui] where
 
 listElemRenderer :: Bool -> Note -> T.Widget Name
 listElemRenderer selected elem = str . (\
-        note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (noteContent note)
+        note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (head . lines . noteContent $ note)
     ) $ elem
 
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
