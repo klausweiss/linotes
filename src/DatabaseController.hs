@@ -11,28 +11,39 @@
 module DatabaseController
     ( saveNote
     , readNotes
+    , dbFile
     ) where
 
 import Database.Persist
 import Database.Persist.Sqlite hiding (migrate)
 import Database.Persist.TH
 import Data.Time
+import Data.Text (pack)
 import Control.Monad.IO.Class
+import System.Directory
 
 import Models.Note
 
 db_file = "notes.sqlite3"
+dbFile = do
+    home <- getHomeDirectory
+    notes_parent_name <- return "/.notes/"
+    db_file_path <- return "notes.sqlite3"
+    notes_parent <- return $ home ++ notes_parent_name
+    createDirectoryIfMissing True notes_parent
+    db_file <- return $ notes_parent ++ db_file_path
+    return db_file
 
 
-saveNote :: String -> IO String
-saveNote note = runSqlite db_file $ do
+saveNote :: String -> String -> IO String
+saveNote db_file note = runSqlite (pack db_file) $ do
     runMigration migrateAll
     time <- liftIO getCurrentTime
     noteId <- insert $ Note note time
     return note
 
-readNotes :: IO [Note]
-readNotes = runSqlite db_file $ do
+readNotes :: String -> IO [Note]
+readNotes db_file = runSqlite (pack db_file) $ do
     runMigration migrateAll
     notes <- selectList [] [Desc NoteLastModified]
     return $ map entityVal notes

@@ -1,4 +1,7 @@
-import DatabaseController (saveNote)
+import DatabaseController (saveNote, dbFile)
 
 main :: IO ()
-main = getLine >>= saveNote >> return ()
+main = getLine >>= \note ->
+       dbFile >>= \db_file ->
+       saveNote db_file note >>
+       return ()

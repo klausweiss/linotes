@@ -21,7 +21,7 @@ import qualified Graphics.Vty as Vty
 import Lens.Micro ((&), (.~))
 import Lens.Micro.TH (makeLenses)
 
-import DatabaseController (readNotes)
+import DatabaseController (readNotes, dbFile)
 import Widgets
 import Models.Note
     ( noteContent
@@ -43,7 +43,8 @@ makeLenses ''St -- to be able to extract list state from state for handleListEve
 
 main :: IO ()
 main = do
-    notes <- readNotes
+    db_file <- dbFile
+    notes <- readNotes db_file
     void $ M.defaultMain app (initialState notes)
 
 app :: M.App St e Name
