@@ -17,11 +17,18 @@ import Brick.Widgets.Core
 import qualified Brick.Types as T
 import qualified Brick.Widgets.List as L
 import qualified Data.Vector as Vec
+import Database.Persist.Types
+    ( Entity
+    , entityVal)
 import qualified Graphics.Vty as Vty
 import Lens.Micro ((&), (.~))
 import Lens.Micro.TH (makeLenses)
 
-import DatabaseController (readNotes, dbFile)
+import DatabaseController
+    ( readNotes
+    , deleteNote
+    , dbFile
+    )
 import Widgets
 import Models.Note
     ( noteContent
@@ -35,8 +42,8 @@ data Name = VPNotes | VPNote
 
 
 -- application state
-data St = St { _stNotes :: L.List Name Note
-             , _stSelected :: Maybe Note
+data St = St { _stNotes :: L.List Name (Entity Note)
+             , _stSelected :: Maybe (Entity Note)
              }
 makeLenses ''St -- to be able to extract list state from state for handleListEvent
 
@@ -65,20 +72,23 @@ drawUI st = [ui] where
             withAttr "noteContent" $
             noteContainer VPNote $ case selected of 
                 Nothing -> "--- [ note content ] ---"
-                Just note -> noteContent note
+                Just note -> noteContent . entityVal $ note
     _list = st & _stNotes
     selected = st & _stSelected
 
-listElemRenderer :: Bool -> Note -> T.Widget Name
+listElemRenderer :: Bool -> Entity Note -> T.Widget Name
 listElemRenderer selected elem = str . (\
         note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (head . lines . noteContent $ note)
-    ) $ elem
+    ) $ entityVal elem
 
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
 appEvent st (T.VtyEvent e) = 
     let _list = st & _stNotes 
     in case e of
-          Vty.EvKey Vty.KEnter [] -> openNote st _list
+          Vty.EvKey Vty.KEnter [] -> openNoteEv st _list
+
+          Vty.EvKey Vty.KDel [] -> deleteNoteEv st _list
+          Vty.EvKey (Vty.KChar 'd') [] -> deleteNoteEv st _list
 
           Vty.EvKey Vty.KEsc [] -> M.halt st
           Vty.EvKey (Vty.KChar 'q') [] -> M.halt st
@@ -92,7 +102,7 @@ attrMap = AM.attrMap Vty.defAttr
     , ("noteContent",       Vty.yellow `on` Vty.black)
     ]
 
-initialState :: [Note] -> St
+initialState :: [Entity Note] -> St
 initialState _list =
     St { _stNotes = L.list VPNotes (Vec.fromList _list) 1
        , _stSelected = Nothing
@@ -101,8 +111,19 @@ initialState _list =
 
 -- EVENTS
 
-openNote :: St -> L.List Name Note -> T.EventM Name (T.Next St)
-openNote st _list = let elem = L.listSelectedElement _list
-              in case elem of
-                Nothing -> M.continue st
-                Just (i, note) -> M.continue $ st & stSelected .~ Just note
+openNoteEv :: St -> L.List Name (Entity Note) -> T.EventM Name (T.Next St)
+openNoteEv st _list =
+    let elem = L.listSelectedElement _list
+    in case elem of
+        Nothing -> M.continue st
+        Just (i, note) -> M.continue $ st & stSelected .~ Just note
+
+deleteNoteEv :: St -> L.List Name (Entity Note) -> T.EventM Name (T.Next St)
+deleteNoteEv st _list =
+    let elem = L.listSelectedElement _list
+    in case elem of
+        Nothing -> M.continue st
+        Just(i, note) -> M.suspendAndResume $ do
+            db_file <- dbFile
+            deleteNote db_file note
+            return $ st & stNotes .~ L.listRemove i _list

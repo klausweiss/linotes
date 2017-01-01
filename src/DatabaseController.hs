@@ -9,13 +9,14 @@
 {-# LANGUAGE TypeFamilies               #-}
 
 module DatabaseController
-    ( saveNote
+    ( dbFile
+    , deleteNote
     , readNotes
-    , dbFile
+    , saveNote
     ) where
 
 import Database.Persist
-import Database.Persist.Sqlite hiding (migrate)
+import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Data.Text (pack)
@@ -44,8 +45,12 @@ saveNote db_file note = runSqlite (pack db_file) $ do
         return note
     else return ""
 
-readNotes :: String -> IO [Note]
+readNotes :: String -> IO [Entity Note]
 readNotes db_file = runSqlite (pack db_file) $ do
     runMigration migrateAll
     notes <- selectList [] [Desc NoteLastModified]
-    return $ map entityVal notes
+    return $ notes
+
+deleteNote db_file note = runSqlite (pack db_file) $ do
+    runMigration migrateAll
+    delete (entityKey note)
