@@ -24,7 +24,7 @@ import System.Directory
 
 import Models.Note
 
-db_file = "notes.sqlite3"
+dbFile :: IO FilePath
 dbFile = do
     home <- getHomeDirectory
     notes_parent_name <- return "/.notes/"
