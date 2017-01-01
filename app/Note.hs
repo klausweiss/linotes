@@ -1,5 +1,8 @@
-import DatabaseController (saveNote, dbFile)
-import Input
+import DatabaseController
+    ( saveNote
+    , dbFile
+    )
+import Input (getNote)
 
 main :: IO ()
 main = getNote >>= \note ->

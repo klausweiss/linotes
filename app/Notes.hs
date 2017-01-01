@@ -21,7 +21,11 @@ import Database.Persist.Types
     ( Entity
     , entityVal)
 import qualified Graphics.Vty as Vty
-import Lens.Micro ((&), (.~))
+import Lens.Micro
+    ( (&)
+    , (.~)
+    , (^.)
+    )
 import Lens.Micro.TH (makeLenses)
 
 import DatabaseController
@@ -29,7 +33,7 @@ import DatabaseController
     , deleteNote
     , dbFile
     )
-import Widgets
+import Widgets (noteContainer)
 import Models.Note
     ( noteContent
     , noteLastModified
@@ -73,8 +77,8 @@ drawUI st = [ui] where
             noteContainer VPNote $ case selected of 
                 Nothing -> "--- [ note content ] ---"
                 Just note -> noteContent . entityVal $ note
-    _list = st & _stNotes
-    selected = st & _stSelected
+    _list = st^.stNotes
+    selected = st^.stSelected
 
 listElemRenderer :: Bool -> Entity Note -> T.Widget Name
 listElemRenderer selected elem = str . (\
@@ -83,7 +87,7 @@ listElemRenderer selected elem = str . (\
 
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
 appEvent st (T.VtyEvent e) = 
-    let _list = st & _stNotes 
+    let _list = st^.stNotes 
     in case e of
           Vty.EvKey Vty.KEnter [] -> openNoteEv st _list
 

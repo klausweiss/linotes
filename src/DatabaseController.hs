@@ -15,13 +15,26 @@ module DatabaseController
     , saveNote
     ) where
 
-import Database.Persist
 import Database.Persist.Sqlite
-import Database.Persist.TH
-import Data.Time
+    ( delete
+    , Entity
+    , entityKey
+    , insert
+    , runSqlite
+    , runMigration
+    , selectList
+    , SelectOpt(..)
+    )
+import Data.Time (getCurrentTime)
 import Data.Text (pack)
 import Control.Monad.IO.Class
+    ( liftIO
+    , MonadIO
+    )
+import Control.Monad.Trans.Control (MonadBaseControl)
 import System.Directory
+    ( getHomeDirectory
+    , createDirectoryIfMissing)
 
 import Models.Note
 
@@ -51,6 +64,7 @@ readNotes db_file = runSqlite (pack db_file) $ do
     notes <- selectList [] [Desc NoteLastModified]
     return $ notes
 
+deleteNote :: (Monad m, MonadIO m, MonadBaseControl IO m) => String -> Entity Note -> m ()
 deleteNote db_file note = runSqlite (pack db_file) $ do
     runMigration migrateAll
     delete (entityKey note)

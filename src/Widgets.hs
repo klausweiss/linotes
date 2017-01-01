@@ -10,9 +10,8 @@ import Brick.Widgets.Core
     , viewport
     , withAttr
     )
-import Data.List.Split
-import Lens.Micro ((^.), (&))
-
+import Data.List.Split (chunksOf)
+import Lens.Micro ((^.)) 
 
 noteContainer :: (Ord a, Show a) => a -> String -> T.Widget a
 noteContainer _vp content = 
