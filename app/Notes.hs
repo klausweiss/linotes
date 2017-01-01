@@ -78,13 +78,10 @@ appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
 appEvent st (T.VtyEvent e) = 
     let _list = st & _stNotes 
     in case e of
-          Vty.EvKey Vty.KEnter [] -> 
-              let elem = L.listSelectedElement _list
-              in case elem of
-                Nothing -> M.continue st
-                Just (i, note) -> M.continue $ st & stSelected .~ Just note
+          Vty.EvKey Vty.KEnter [] -> openNote st _list
 
           Vty.EvKey Vty.KEsc [] -> M.halt st
+          Vty.EvKey (Vty.KChar 'q') [] -> M.halt st
 
           ev -> M.continue =<< T.handleEventLensed st stNotes L.handleListEvent ev
 
@@ -100,3 +97,12 @@ initialState _list =
     St { _stNotes = L.list VPNotes (Vec.fromList _list) 1
        , _stSelected = Nothing
        }
+
+
+-- EVENTS
+
+openNote :: St -> L.List Name Note -> T.EventM Name (T.Next St)
+openNote st _list = let elem = L.listSelectedElement _list
+              in case elem of
+                Nothing -> M.continue st
+                Just (i, note) -> M.continue $ st & stSelected .~ Just note
