@@ -28,7 +28,7 @@ import Models.Note
 dbFile :: IO FilePath
 dbFile = do
     home <- getHomeDirectory
-    notes_parent_name <- return "/.notes/"
+    notes_parent_name <- return "/.linotes/"
     db_file_path <- return "notes.sqlite3"
     notes_parent <- return $ home ++ notes_parent_name
     createDirectoryIfMissing True notes_parent
