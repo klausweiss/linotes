@@ -15,6 +15,10 @@ Usage
 -----
 
 To take a note run
+
+    note [NOTE CONTENTS]
+
+e.g. `note star linotes repo on Github` or
     
     note
 
