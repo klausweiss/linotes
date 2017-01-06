@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 import System.Environment (getArgs)
 
 import DatabaseController
@@ -7,8 +9,7 @@ import DatabaseController
 import Input (getNote)
 
 main :: IO ()
-main = getArgs >>= \args ->
-       case args of
+main = getArgs >>= \case
         [] -> getNote 
         text -> return (unwords text)
        >>= \note ->
