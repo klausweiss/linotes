@@ -9,7 +9,8 @@
 {-# LANGUAGE TypeFamilies               #-}
 
 module DatabaseController
-    ( dbFile
+    ( openDefaultDb
+    , openDb
     , deleteNote
     , readNotes
     , saveNote
@@ -38,16 +39,19 @@ import System.Directory
 
 import Models.Note
 
-dbFile :: IO FilePath
-dbFile = do
+
+openDefaultDb :: IO FilePath
+openDefaultDb = openDb "notes.sqlite3"
+
+openDb :: String -> IO FilePath
+openDb filename = do
     home <- getHomeDirectory
     notes_parent_name <- return "/.linotes/"
-    db_file_path <- return "notes.sqlite3"
+    db_file_path <- return filename
     notes_parent <- return $ home ++ notes_parent_name
     createDirectoryIfMissing True notes_parent
     db_file <- return $ notes_parent ++ db_file_path
     return db_file
-
 
 saveNote :: String -> String -> IO String
 saveNote db_file note = runSqlite (pack db_file) $ do

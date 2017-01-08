@@ -31,7 +31,7 @@ import Lens.Micro.TH (makeLenses)
 import DatabaseController
     ( readNotes
     , deleteNote
-    , dbFile
+    , openDefaultDb
     )
 import Widgets (noteContainer)
 import Models.Note
@@ -54,7 +54,7 @@ makeLenses ''St -- to be able to extract list state from state for handleListEve
 
 main :: IO ()
 main = do
-    db_file <- dbFile
+    db_file <- openDefaultDb
     notes <- readNotes db_file
     void $ M.defaultMain app (initialState notes)
 
@@ -135,6 +135,6 @@ deleteNoteEv st _list =
     in case elem of
         Nothing -> M.continue st
         Just(i, note) -> M.suspendAndResume $ do
-            db_file <- dbFile
+            db_file <- openDefaultDb
             deleteNote db_file note
             return $ st & stNotes .~ L.listRemove i _list

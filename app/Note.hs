@@ -4,7 +4,7 @@ import System.Environment (getArgs)
 
 import DatabaseController
     ( saveNote
-    , dbFile
+    , openDefaultDb
     )
 import Input (getNote)
 
@@ -13,6 +13,6 @@ main = getArgs >>= \case
         [] -> getNote 
         text -> return (unwords text)
        >>= \note ->
-       dbFile >>= \db_file ->
+       openDefaultDb >>= \db_file ->
        saveNote db_file note >>
        return ()
