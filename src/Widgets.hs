@@ -10,8 +10,9 @@ import Brick.Widgets.Core
     , viewport
     , withAttr
     )
-import Data.List.Split (chunksOf)
 import Lens.Micro ((^.)) 
+
+import Widgets.Internal (fitInWidth)
 
 noteContainer :: (Ord a, Show a) => a -> String -> T.Widget a
 noteContainer _vp content = 
@@ -22,9 +23,3 @@ noteContainer _vp content =
             hLimit maxW $
             viewport _vp T.Vertical $
             str $ fitInWidth content maxW -- ++ (take maxW $ repeat ' ')
-
-fitInWidth :: String -> Int -> String
-fitInWidth text w = foldl1 (\
-        acc x -> acc ++ "\n" ++ x
-    ) $ chunksOf w $ text ++ " "
-
