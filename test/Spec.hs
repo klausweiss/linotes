@@ -1,2 +1,6 @@
+import qualified Parametrized as P
+import qualified Unit as U
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = U.main >>
+       P.main
