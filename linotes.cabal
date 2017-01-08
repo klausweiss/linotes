@@ -18,7 +18,6 @@ library
   exposed-modules:     DatabaseController
                      , Models.Note
                      , Input
-                     , Input.Internal
                      , Widgets
                      , Widgets.Internal
   build-depends:       base >= 4.7 && < 5
