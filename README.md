@@ -35,6 +35,13 @@ To view notes run
 - `d` / `Del` - delete selected note
 - `q` / `Esc` - quit application
 
+Documentation
+-------------
+Documentation can be generated with haddock:
+
+    stack haddock
+    stack haddock --open
+
 Sync
 ----
 You can sync your notes between computers by keeping the `~/.linotes/notes.sqlite3` file in the cloud (e.g. using symlink).

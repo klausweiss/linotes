@@ -14,7 +14,11 @@ import Lens.Micro ((^.))
 
 import Widgets.Internal (fitInWidth)
 
-noteContainer :: (Ord a, Show a) => a -> String -> T.Widget a
+-- |Given a viewport and note content generates Brick Widget containing the content.
+noteContainer :: (Ord a, Show a)
+              => a          -- ^ Viewport
+              -> String     -- ^ Note content
+              -> T.Widget a -- ^ The widget
 noteContainer _vp content = 
     T.Widget T.Greedy T.Greedy $ do
         ctx <- T.getContext

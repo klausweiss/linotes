@@ -58,6 +58,7 @@ main = do
     notes <- readNotes db_file
     void $ M.defaultMain app (initialState notes)
 
+-- Brick boilerplate
 app :: M.App St e Name
 app = M.App { M.appDraw = drawUI
             , M.appStartEvent = return
@@ -66,6 +67,7 @@ app = M.App { M.appDraw = drawUI
             , M.appAttrMap = const attrMap
             }
 
+-- The function responsible for redrawing UI
 drawUI :: St -> [T.Widget Name]
 drawUI st = [ui] where
     ui = vBox [ notes
@@ -80,11 +82,13 @@ drawUI st = [ui] where
     _list = st^.stNotes
     selected = st^.stSelected
 
+-- Responsible for drawing a list item (a note in list)
 listElemRenderer :: Bool -> Entity Note -> T.Widget Name
 listElemRenderer selected elem = str . (\
         note -> (take 19 . show . noteLastModified $ note) ++ " " ++ (head . lines . noteContent $ note)
     ) $ entityVal elem
 
+-- Responsible for handling mouse/keyboard events
 appEvent :: St -> T.BrickEvent Name e -> T.EventM Name (T.Next St)
 appEvent st (T.VtyEvent e) = 
     let _list = st^.stNotes 
@@ -102,6 +106,7 @@ appEvent st (T.VtyEvent e) =
 
           ev -> M.continue =<< T.handleEventLensed st stNotes L.handleListEvent ev
 
+-- Defines styles of the application
 attrMap :: AM.AttrMap
 attrMap = AM.attrMap Vty.defAttr
     [ (L.listAttr,          Vty.white `on` Vty.black)
@@ -109,6 +114,7 @@ attrMap = AM.attrMap Vty.defAttr
     , ("noteContent",       Vty.yellow `on` Vty.black)
     ]
 
+-- The initial application state
 initialState :: [Entity Note] -> St
 initialState _list =
     St { _stNotes = L.list VPNotes (Vec.fromList _list) 1

@@ -40,10 +40,13 @@ import System.Directory
 import Models.Note
 
 
+-- |Returns a handle to the default database file used by the application
 openDefaultDb :: IO FilePath
 openDefaultDb = openDb "notes.sqlite3"
 
-openDb :: String -> IO FilePath
+-- |Returns a handle to database file
+openDb :: String        -- ^ Filename (placed in ~\/.linotes\/) - will be created if necessary
+       -> IO FilePath   -- ^ Handle to database file wrapped in an IO monad
 openDb filename = do
     home <- getHomeDirectory
     notes_parent_name <- return "/.linotes/"
@@ -53,7 +56,10 @@ openDb filename = do
     db_file <- return $ notes_parent ++ db_file_path
     return db_file
 
-saveNote :: String -> String -> IO String
+-- |Saves a note in given SQLite database.
+saveNote :: String      -- ^ SQLite database file path
+         -> String      -- ^ Note content
+         -> IO String   -- ^ Note content wrapped in an IO monad
 saveNote db_file note = runSqlite (pack db_file) $ do
     runMigration migrateAll
     if length note > 0 then do
@@ -62,13 +68,19 @@ saveNote db_file note = runSqlite (pack db_file) $ do
         return note
     else return ""
 
-readNotes :: String -> IO [Entity Note]
+-- |Returns a list of note entities from given SQLite database.
+readNotes :: String             -- ^ SQLite database file path
+          -> IO [Entity Note]   -- ^ List of note entities wrapped in an IO monad
 readNotes db_file = runSqlite (pack db_file) $ do
     runMigration migrateAll
     notes <- selectList [] [Desc NoteLastModified]
     return $ notes
 
-deleteNote :: (Monad m, MonadIO m, MonadBaseControl IO m) => String -> Entity Note -> m ()
+-- |Deletes a note entity from given SQLite database.
+deleteNote :: (Monad m, MonadIO m, MonadBaseControl IO m)
+           => String        -- ^ SQLite database file path
+           -> Entity Note   -- ^ The entity to be deleted
+           -> m ()
 deleteNote db_file note = runSqlite (pack db_file) $ do
     runMigration migrateAll
     delete (entityKey note)
