@@ -6,7 +6,6 @@ homepage:            https://github.com/klausweiss/linotes#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Mikołaj Biel
-maintainer:          example@example.com
 copyright:           2016 Mikołaj Biel
 category:            Terminal
 build-type:          Simple
