@@ -22,7 +22,7 @@ noteContainer :: (Ord a, Show a)
 noteContainer _vp content = 
     T.Widget T.Greedy T.Greedy $ do
         ctx <- T.getContext
-        maxW <- return $ ctx ^. T.availWidthL
+        let maxW = ctx ^. T.availWidthL
         T.render $ 
             hLimit maxW $
             viewport _vp T.Vertical $

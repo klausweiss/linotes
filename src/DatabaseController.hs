@@ -49,11 +49,11 @@ openDb :: String        -- ^ Filename (placed in ~\/.linotes\/) - will be create
        -> IO FilePath   -- ^ Handle to database file wrapped in an IO monad
 openDb filename = do
     home <- getHomeDirectory
-    notes_parent_name <- return "/.linotes/"
-    db_file_path <- return filename
-    notes_parent <- return $ home ++ notes_parent_name
+    let notes_parent_name = "/.linotes/"
+    let db_file_path = filename
+    let notes_parent = home ++ notes_parent_name
     createDirectoryIfMissing True notes_parent
-    db_file <- return $ notes_parent ++ db_file_path
+    let db_file = notes_parent ++ db_file_path
     return db_file
 
 -- |Saves a note in given SQLite database.

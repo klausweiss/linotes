@@ -27,9 +27,9 @@ testAddNote :: Test
 testAddNote = TestCase (do
     db_file <- openDb "test.sqlite3"
     notes_count <- length <$> readNotes db_file
-    new_content <- return "Non-empty note"
+    let new_content = "Non-empty note"
     saveNote db_file new_content -- add note to database
-    notes <- return $ readNotes db_file
+    let notes = readNotes db_file
     notes_count_new <- length <$> notes
     assertEqual "Number of notes after adding a new one" (notes_count + 1) notes_count_new 
     new_note_content <- noteContent . entityVal . head <$> notes
