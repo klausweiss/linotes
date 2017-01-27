@@ -26,4 +26,4 @@ noteContainer _vp content =
         T.render $ 
             hLimit maxW $
             viewport _vp T.Vertical $
-            str $ fitInWidth content maxW -- ++ (take maxW $ repeat ' ')
+            str $ fitInWidth content maxW
